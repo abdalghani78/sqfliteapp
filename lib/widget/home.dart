@@ -47,6 +47,7 @@ class _HomeState extends State<Home> {
               'CREATE TABLE tasks(id INTEGER PRIMARY KEY , title TEXT ,date TEXT , time TEXT ,status TEXT)');
         },
         onOpen: (db) {
+          log(db.path);
           log('database opened');
         },
       );
@@ -61,7 +62,7 @@ class _HomeState extends State<Home> {
     try {
       await database.transaction((txn) async {
         await txn.rawInsert(
-            'INSERT INTO tasks(title,date,time,status) VALUES("first tasks" , "0220", "2011", "new" )');
+            'INSERT INTO tasks(title,date,time,status) VALUES("second tasks" , "0220", "2024", "old" )');
         log('insert successfully');
       });
     } catch (error) {
@@ -77,82 +78,93 @@ class _HomeState extends State<Home> {
         key: scaffoldKey,
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-          if(isBottomSheet)
-          {
-            Navigator.pop(context);
-            isBottomSheet = false;
-           setState(() {
-              fabIcon = Icons.edit;
-           });
-          }
-          else{
-             scaffoldKey.currentState?.showBottomSheet((context) {
-            return Container(
-              color: Colors.grey[200],
-              width: double.infinity,
-              height: 320,
-              child: Padding(
-                padding: const EdgeInsets.all(15.0),
-                child: Column(
-                  children: [
-                 customFromField(
-                  controller: titleController, 
-                  type: TextInputType.text,
-                   validate: (value){
-                      if(value == null)
-                      {
-                        return 'the data is empty';
-                      }
-                      else{
-                        return '';
-                      }
-                
-                   },
-                    label: 'New Tasks',
-                     prefix: const Icon(Icons.task),
-                     ),
-                          const SizedBox(
-                            height: 20,
-                          ),
-                     customFromField(
-                      
-                  controller: timeController, 
-                  type: TextInputType.datetime,
-                  
-                  onTap: (){
-                    showTimePicker(
-                      context: context,
-                       initialTime: TimeOfDay.now()).then((value) {
-                        timeController.text = value?.format(context)?? '';
-                       });
-                  },
-                   validate: (value){
-                      if(formKey.currentState!.validate())
-                      {
-                        return 'the data is empty';
-                      }
-                      else{
-                        return '';
-                      }
-                
-                   },
-                    label: 'Time',
-                     prefix: const Icon(Icons.lock_clock),
-                     ),  
-                  ],
-                ),
-              ),
-            );
-           }
-           );
-          setState(() {
-            fabIcon = Icons.add;
-          });
-           isBottomSheet = true;
-      
-          }
+            if (isBottomSheet) {
+              Navigator.pop(context);
+              isBottomSheet = false;
+              setState(() {
+                fabIcon = Icons.edit;
+              });
+            } else {
+              scaffoldKey.currentState?.showBottomSheet((context) {
+                return Container(
+                  color: Colors.grey[200],
+                  width: double.infinity,
+                  height: 320,
+                  child: Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Column(
+                      children: [
+                        buildTextField(
+                          context,
+                          false,
+                          'New Tasks',
+                          const Icon(Icons.task),
+                        ),
+                        // customFromField(
+                        //   controller: titleController,
+                        //   type: TextInputType.text,
+                        //   validate: (value) {
+                        //     if (value == null) {
+                        //       return 'the data is empty';
+                        //     }
+                        //     return '';
+                        //   },
+                        //   label: 'New Tasks',
+                        //   prefix: const Icon(Icons.task),
+                        // ),
+                        const SizedBox(
+                          height: 20,
+                        ),
+                        buildTextField(
+                          context,
+                          true,
+                          'Time',
+                          const Icon(Icons.lock_clock),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (formKey.currentState!.validate()) {
+                              //اذا في مشكلة
+                            } else {
+                              //اذا ما في مشكلة
+                            }
+                          },
+                          child: const Text('Check'),
+                        ),
+                        // customFromField(
+                        //   controller: timeController,
+                        //   type: TextInputType.datetime,
+                        //   onTap: () {
+                        //     showTimePicker(
+                        //             context: context,
+                        //             initialTime: TimeOfDay.now())
+                        //         .then((value) {
+                        //       timeController.text =
+                        //           value?.format(context) ?? '';
+                        //     });
+                        //   },
+                        //   validate: (value) {
+                        //     if (value == null || value.isEmpty) {
+                        //       return 'the data is empty';
+                        //     } else {
+                        //       return 'a';
+                        //     }
+                        //   },
+                        //   label: 'Time',
+                        //   prefix: const Icon(Icons.lock_clock),
+                        // ),
+                      ],
+                    ),
+                  ),
+                );
+              });
+              setState(() {
+                fabIcon = Icons.add;
+              });
+              isBottomSheet = true;
+            }
           },
-          child:  Icon(fabIcon),
+          child: Icon(fabIcon),
         ),
         appBar: AppBar(
           centerTitle: true,
@@ -192,7 +204,40 @@ class _HomeState extends State<Home> {
       ),
     );
   }
+
+  TextFormField buildTextField(
+    BuildContext context,
+    bool isTap,
+    String hint,
+    Icon icon,
+  ) {
+    return TextFormField(
+      controller: hint == 'Time' ? timeController : titleController,
+      keyboardType: isTap ? TextInputType.datetime : TextInputType.text,
+      onTap: isTap
+          ? () {
+              showTimePicker(context: context, initialTime: TimeOfDay.now())
+                  .then((value) {
+                if (value != null) {
+                  timeController.text = value.format(context);
+                } else {
+                  formKey.currentState?.validate();
+                }
+              });
+            }
+          : null,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'the data is empty';
+        }
+        return null;
+      },
+      decoration: InputDecoration(
+        border: const OutlineInputBorder(),
+        labelText: hint,
+        prefixIcon: icon,
+      ),
+    );
+  }
 }
-
-
-
