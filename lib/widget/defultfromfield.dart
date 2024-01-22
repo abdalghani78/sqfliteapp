@@ -13,7 +13,7 @@ Widget customFromField({
   Widget? suffix,
 }) {
   return TextFormField(
-    onTap: onTap ,
+    onTap: onTap,
     controller: controller,
     keyboardType: type,
     onChanged: onChanged,
